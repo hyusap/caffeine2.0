@@ -1,113 +1,246 @@
-import Image from 'next/image'
+"use client";
+import Image from "next/image";
+import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
+import * as faceMesh from "@mediapipe/face_mesh";
+// import * as faceDetection from '@tensorflow-models/face-detection';
+import { ElementRef, useEffect, useRef, useState } from "react";
+import { Camera } from "../utils/camera";
+import { AiFillEye, AiFillCrown } from "react-icons/ai";
 
 export default function Home() {
+  const [detector, setDetector] = useState(
+    null as faceLandmarksDetection.FaceLandmarksDetector | null
+  );
+
+  const firstUpdate = useRef(true);
+  const [shouldBeRed, setShouldBeRed] = useState(false);
+  const [numBlinks, setNumBlinks] = useState(0);
+  const prevHeight = useRef(0);
+  const prevFrameWasClosed = useRef(false);
+  const videoRef = useRef<ElementRef<"video">>(null);
+  const canvasRef = useRef<ElementRef<"canvas">>(null);
+  const leftEyeCanvasRef = useRef<ElementRef<"canvas">>(null);
+  const rightEyeCanvasRef = useRef<ElementRef<"canvas">>(null);
+  const mainRef = useRef<ElementRef<"main">>(null);
+  const [records, setRecords] = useState({
+    highest_blinks: 0,
+  });
+  useEffect(() => {
+    if (!localStorage.getItem("cf-records")) {
+      localStorage.setItem("cf-records", JSON.stringify(records));
+      console.log("setting to zero");
+    } else {
+      setRecords(JSON.parse(localStorage.getItem("cf-records")!));
+    }
+    (async () => {
+      const camera = await Camera.setupCamera({
+        targetFPS: 60,
+        sizeOption: "640 X 480",
+      });
+      const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+      const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig =
+        {
+          runtime: "mediapipe", // or 'tfjs'
+          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@${faceMesh.VERSION}`,
+          refineLandmarks: true,
+        };
+      let tempDetector = await faceLandmarksDetection.createDetector(
+        model,
+        detectorConfig
+      );
+      setDetector(tempDetector);
+      async function run() {
+        let faces = null;
+        const video = videoRef.current as HTMLVideoElement;
+
+        try {
+          faces = await tempDetector.estimateFaces(video as HTMLVideoElement, {
+            flipHorizontal: false,
+          });
+
+          if (!faces || faces.length === 0 || !faces[0]?.keypoints)
+            requestAnimationFrame(run);
+        } catch (error) {
+          // tempDetector.dispose();
+          // alert(error);
+          console.log(error);
+        }
+
+        try {
+          // camera.drawCtx();
+          const canvas = canvasRef.current as HTMLCanvasElement;
+          const video = videoRef.current as HTMLVideoElement;
+          const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+          ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+          if (!faces) return;
+
+          faces.forEach((face) => {
+            face.keypoints.forEach((keypoint) => {
+              const { x, y } = keypoint;
+              ctx.beginPath();
+              ctx.arc(x, y, 2, 0, 2 * Math.PI);
+              ctx.fillStyle = "red";
+              ctx.fill();
+            });
+          });
+          const lefteyetop = faces[0].keypoints[159];
+          const lefteyebottom = faces[0].keypoints[145];
+          const lefteyecenter = faces[0].keypoints[33];
+          const righteyetop = faces[0].keypoints[386];
+          const righteyebottom = faces[0].keypoints[374];
+          const righteyecenter = faces[0].keypoints[263];
+
+          const leftEyeHeight = lefteyebottom.y - lefteyetop.y;
+          const rightEyeHeight = righteyebottom.y - righteyetop.y;
+          const avgHeight = (leftEyeHeight + rightEyeHeight) / 2;
+
+          if (avgHeight < 6) {
+            setShouldBeRed(true);
+            prevFrameWasClosed.current = true;
+          } else {
+            setShouldBeRed(false);
+
+            if (prevFrameWasClosed.current) {
+              setNumBlinks((numBlinks) => {
+                console.log("records.highest_blinks", records.highest_blinks);
+                if (numBlinks > records.highest_blinks) {
+                  setRecords((records) => {
+                    return { ...records, highest_blinks: numBlinks + 1 };
+                  });
+                  console.log("setting new highest");
+                }
+
+                return numBlinks + 1;
+              });
+            }
+
+            prevFrameWasClosed.current = false;
+          }
+
+          prevHeight.current = avgHeight;
+          // draw line for height left eye
+          ctx.beginPath();
+          ctx.moveTo(lefteyetop.x, lefteyetop.y);
+          ctx.lineTo(lefteyebottom.x, lefteyebottom.y);
+          ctx.strokeStyle = "green";
+          ctx.stroke();
+
+          // draw line for height right eye
+          ctx.beginPath();
+          ctx.moveTo(righteyetop.x, righteyetop.y);
+          ctx.lineTo(righteyebottom.x, righteyebottom.y);
+          ctx.strokeStyle = "green";
+          ctx.stroke();
+
+          // left eye zoom
+          const leftEyeCanvas = leftEyeCanvasRef.current as HTMLCanvasElement;
+          const leftEyeCtx = leftEyeCanvas.getContext(
+            "2d"
+          ) as CanvasRenderingContext2D;
+          leftEyeCtx.drawImage(
+            video,
+            lefteyecenter.x - 10,
+            lefteyecenter.y - 25,
+            50,
+            50,
+            0,
+            0,
+            50,
+            50
+          );
+
+          const rightEyeCanvas = rightEyeCanvasRef.current as HTMLCanvasElement;
+          const rightEyeCtx = rightEyeCanvas.getContext(
+            "2d"
+          ) as CanvasRenderingContext2D;
+          rightEyeCtx.drawImage(
+            video,
+            righteyecenter.x - 40,
+            righteyecenter.y - 25,
+            50,
+            50,
+            0,
+            0,
+            50,
+            50
+          );
+
+          requestAnimationFrame(run);
+        } catch (e) {}
+      }
+      window.requestAnimationFrame(run);
+      setDetector(tempDetector);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (firstUpdate.current) {
+      firstUpdate.current = false;
+      return;
+    }
+
+    console.log("setting reocrds to", records);
+
+    localStorage.setItem("cf-records", JSON.stringify(records));
+  }, [records]);
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main
+      className={
+        "h-screen text-white p-5 flex flex-col " +
+        (shouldBeRed ? "bg-red-500" : "bg-[#264012]")
+      }
+      id="holding-thing"
+    >
+      <h1 className="text-[6vw] font-black">
+        welcome to{" "}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8FF00] to-[#3AD59F]">
+          caffeine 2.0
+        </span>
+      </h1>
+
+      <video id="video" className="hidden" playsInline ref={videoRef}></video>
+
+      <div className="grid grid-cols-3 gap-5 flex-grow">
+        <div className="col-span-2 row-span-2 rounded-lg overflow-hidden">
+          <canvas
+            ref={canvasRef}
+            id="output"
+            className=" h-full w-auto"
+            // width={640}
+            // height={480}
+          />
+        </div>
+        <div
+          id="stats"
+          className="bg-slate-900 text-white rounded-2xl shadow-xl p-5 row-span-3 text-xl"
+        >
+          <div className="flex items-center justify-items-center justify-center">
+            <AiFillEye />
+            <p className="ml-2">{numBlinks}</p>
+          </div>
+
+          <div className="flex items-center justify-items-center justify-center">
+            <AiFillCrown />
+            <p className="ml-2">{records.highest_blinks}</p>
+          </div>
+        </div>
+        <div>
+          <canvas
+            className="rounded-lg h-full w-auto"
+            ref={rightEyeCanvasRef}
+            height={50}
+            width={50}
+          />
+        </div>
+        <div>
+          <canvas
+            className="rounded-lg h-full w-auto"
+            ref={leftEyeCanvasRef}
+            height={50}
+            width={50}
+          />
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
     </main>
-  )
+  );
 }
