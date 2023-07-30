@@ -1,6 +1,6 @@
 "use client";
-import Image from "next/image";
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
+// import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import * as faceMesh from "@mediapipe/face_mesh";
 // import * as faceDetection from '@tensorflow-models/face-detection';
 import { ElementRef, useEffect, useRef, useState } from "react";
@@ -10,6 +10,7 @@ import { FaClock, FaMedal } from "react-icons/fa";
 import { useLocalStorage } from "usehooks-ts";
 import { getRandomInt } from "@/utils/misc";
 import { useToast } from "@chakra-ui/react";
+
 
 let test = 0;
 
@@ -36,34 +37,13 @@ export default function Home() {
   const leftEyeCanvasRef = useRef<ElementRef<"canvas">>(null);
   const rightEyeCanvasRef = useRef<ElementRef<"canvas">>(null);
   const mainRef = useRef<ElementRef<"main">>(null);
-
   const toast = useToast();
-  // useEffect(() => {
-  //   // timer for keystroke delay
-  //   let intervalId: NodeJS.Timer;
-  //   intervalId = setInterval(
-  //     () => setTimeSinceLastBlink(timeSinceLastBlink + 0.1),
-  //     100
-  //   ); // run every 100 milliseconds
-  //   return () => clearInterval(intervalId);
-  // }, [isRunning]);
-  // useEffect(() => {
-
-  // }, []);
 
   useEffect(() => {
-    // if (!localStorage.getItem("cf-records")) {
-    //   localStorage.setItem("cf-records", JSON.stringify(records));
-    //   console.log("setting to zero");
-    // } else {
-    //   setRecords(JSON.parse(localStorage.getItem("cf-records")!));
-    //   highest_blinks = records.highest_blinks;
-    // }
-
     if (!localStorage.getItem("cf-longest-time")) {
       setLongestTime("0");
     }
-    // timer for keystroke delay
+    // interval for time since last blink
     setInterval(() => {
       setTimeSinceLastBlink((timeSinceLastBlink) => {
         setLongestTime((longestTime: string) => {
@@ -76,16 +56,10 @@ export default function Home() {
         return timeSinceLastBlink + 0.1;
       });
 
-      // setTimeSinceLastBlink(timeSinceLastBlink + 0.1);
     }, 100); // run every 100 milliseconds
 
     (async () => {
-      // const camera = await Camera.setupCamera({
-      //   targetFPS: 60,
-      //   sizeOption: "640 X 480",
-      // });
       if (!navigator) return;
-
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error(
           "Browser API navigator.mediaDevices.getUserMedia not available"
@@ -131,9 +105,6 @@ export default function Home() {
       canvas.height = videoHeight;
 
       const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-
-      // const canvasContainer = document.querySelector(".canvas-wrapper");
-      // canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
 
       // Because the image from camera is mirrored, need to flip horizontally.
       ctx.translate(video.videoWidth, 0);
@@ -223,29 +194,17 @@ export default function Home() {
                 status: "warning",
                 isClosable: true,
               });
-              // setLastBlinkTime(new Date().getTime());
               setNumBlinks((numBlinks) => {
-                // if (numBlinks > highest_blinks) {
-                //   setRecords((records) => {
-                //     highest_blinks += 1;
-                //     return { highest_blinks: numBlinks + 1 };
-                //   });
-                //   console.log("setting new highest");
-                // }
-
                 return numBlinks + 1;
               });
 
               // within here, we know that the user blinked
-
               setTimeSinceLastBlink(0);
               setIsRunning(!isRunning);
             }
 
             prevFrameWasClosed.current = false;
           }
-          // setTimeSinceLastBlink(new Date().getTime() - lastBlinkTime);
-          // timeSinceLastBlink += 0.1;
           prevHeight.current = avgHeight;
           // draw line for height left eye
           ctx.beginPath();
@@ -302,16 +261,6 @@ export default function Home() {
     })();
   }, []);
 
-  // useEffect(() => {
-  //   if (firstUpdate.current) {
-  //     firstUpdate.current = false;
-  //     return;
-  //   }
-
-  //   console.log("setting reocrds to", records);
-
-  //   localStorage.setItem("cf-records", JSON.stringify(records));
-  // }, [records]);
   return (
     <main
       className={
@@ -338,23 +287,10 @@ export default function Home() {
             ref={canvasRef}
             id="output"
             className="w-full h-auto"
-            // width={640}
             width={"100%"}
-            // height={"100%"}
-
-            // height={480}
           />
         </div>
-        {/* <div
-          id="stats"
-          className="bg-slate-900 text-white rounded-2xl shadow-xl p-10 row-span-3 text-xl flex flex-col"
-        >
-          <h2 className="text-4xl font-black ">Stats</h2>
-
-          <div className="flex items-center justify-items-center justify-center">
-
-          </div>
-        </div> */}
+  
         <table className="table-auto border border-gray-800 rounded-2xl font-normal overflow-hidden p-2 row-span-3">
           <thead className="bg-gray-800 text-gray-500 rounded-2xl">
             <tr>
@@ -366,7 +302,7 @@ export default function Home() {
             <tr className="text-center">
               <td className="text-gray-400">
                 <div className="flex justify-center items-center gap-1 h-full w-full">
-                  <AiFillEye /> Blinks
+                  <AiFillEye /> Blinks (current session)
                 </div>
               </td>
               <td>{numBlinks}</td>
@@ -396,8 +332,6 @@ export default function Home() {
             ref={rightEyeCanvasRef}
             height={50}
             width={50}
-            // width={"100%"}
-            // height={"100%"}
           />
         </div>
         <div className="flex justify-center">
@@ -406,18 +340,9 @@ export default function Home() {
             ref={leftEyeCanvasRef}
             height={50}
             width={50}
-            // width={"100%"}
-            // height={"100%"}
           />
         </div>
-        {/* <div>
-          <canvas
-            className="rounded-lg h-full "
-            ref={leftEyeCanvasRef}
-            height={50}
-            width={50}
-          />
-        </div> */}
+
       </div>
     </main>
   );
