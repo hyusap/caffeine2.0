@@ -182,7 +182,9 @@ export default function Home() {
             setShouldBeRed(true);
 
             prevFrameWasClosed.current = true;
+            
             setLastBlinkTime(new Date().getTime());
+            setTimeSinceLastBlink(0);
           } else {
             setShouldBeRed(false);
 
@@ -193,6 +195,7 @@ export default function Home() {
                   "Don't fall asleep. Here is a pleasant and soothing sound to keep you awake.",
                 status: "warning",
                 isClosable: true,
+                duration: 1000
               });
               setNumBlinks((numBlinks) => {
                 return numBlinks + 1;
@@ -276,12 +279,12 @@ export default function Home() {
             caffeine 2.0
           </span>
         </h1>
-        <img src="/caffeine_logo.png" alt="" className='max-h-24 animate-spin	'/>
+        <img src="/logo_clear.png" alt="" className='max-h-24 animate-spin	'/>
       </div>
 
       <video id="video" className="hidden" playsInline ref={videoRef}></video>
 
-      <div className="grid grid-cols-3 grid-rows-3 gap-5 h-[80vh] shadow-xl">
+      <div className="grid grid-cols-3 grid-rows-3 gap-5 h-[80vh]">
         <div className="col-span-2 row-span-2 rounded-lg overflow-hidden">
           <canvas
             ref={canvasRef}
