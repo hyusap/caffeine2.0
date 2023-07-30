@@ -151,6 +151,8 @@ export class Camera {
    * @param cameraParam From app `STATE.camera`.
    */
   static async setupCamera(cameraParam) {
+    if (!navigator) return;
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error(
         "Browser API navigator.mediaDevices.getUserMedia not available"

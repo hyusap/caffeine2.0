@@ -83,10 +83,64 @@ export default function Home() {
     }, 100); // run every 100 milliseconds
 
     (async () => {
-      const camera = await Camera.setupCamera({
-        targetFPS: 60,
-        sizeOption: "640 X 480",
+      // const camera = await Camera.setupCamera({
+      //   targetFPS: 60,
+      //   sizeOption: "640 X 480",
+      // });
+      if (!navigator) return;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          "Browser API navigator.mediaDevices.getUserMedia not available"
+        );
+      }
+      const video = videoRef.current as HTMLVideoElement;
+
+      const videoConfig = {
+        audio: false,
+        video: {
+          facingMode: "user",
+          // Only setting the video to a specified size for large screen, on
+          // mobile devices accept the default size.
+          // width: isMobile() ? VIDEO_SIZE["360 X 270"].width : $size.width,
+          // height: isMobile() ? VIDEO_SIZE["360 X 270"].height : $size.height,
+          // frameRate: {
+          //   ideal: targetFPS,
+          // },
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(videoConfig);
+
+      video.srcObject = stream;
+
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          resolve(video);
+        };
       });
+
+      video.play();
+
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      // Must set below two lines, otherwise video element doesn't show.
+      video.width = videoWidth;
+      video.height = videoHeight;
+
+      const canvas = canvasRef.current as HTMLCanvasElement;
+
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+
+      const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+
+      // const canvasContainer = document.querySelector(".canvas-wrapper");
+      // canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
+
+      // Because the image from camera is mirrored, need to flip horizontally.
+      ctx.translate(video.videoWidth, 0);
+      ctx.scale(-1, 1);
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
       const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig =
         {
