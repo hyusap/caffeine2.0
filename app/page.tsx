@@ -6,11 +6,10 @@ import * as faceMesh from "@mediapipe/face_mesh";
 import { ElementRef, useEffect, useRef, useState } from "react";
 import { Camera } from "../utils/camera";
 import { AiFillEye, AiFillCrown } from "react-icons/ai";
-import { FaClock, FaMedal } from "react-icons/fa";
+import { FaCamera, FaClock, FaMedal } from "react-icons/fa";
 import { useLocalStorage } from "usehooks-ts";
 import { getRandomInt } from "@/utils/misc";
 import { useToast } from "@chakra-ui/react";
-
 
 let test = 0;
 
@@ -55,7 +54,6 @@ export default function Home() {
         });
         return timeSinceLastBlink + 0.1;
       });
-
     }, 100); // run every 100 milliseconds
 
     (async () => {
@@ -182,7 +180,7 @@ export default function Home() {
             setShouldBeRed(true);
 
             prevFrameWasClosed.current = true;
-            
+
             setLastBlinkTime(new Date().getTime());
             setTimeSinceLastBlink(0);
           } else {
@@ -195,7 +193,7 @@ export default function Home() {
                   "Don't fall asleep. Here is a pleasant and soothing sound to keep you awake.",
                 status: "warning",
                 isClosable: true,
-                duration: 1000
+                duration: 1000,
               });
               setNumBlinks((numBlinks) => {
                 return numBlinks + 1;
@@ -272,28 +270,39 @@ export default function Home() {
       }
       id="holding-thing"
     >
-      <div className="flex items-center">
+      <div className="flex items-center mb-5">
         <h1 className="text-[6vw] font-black grow">
           welcome to{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9B4431] to-[#4C231A]">
             caffeine 2.0
           </span>
         </h1>
-        <img src="/logo_clear.png" alt="" className='max-h-24 animate-spin	'/>
+        <img src="/logo_clear.png" alt="" className="max-h-24 animate-spin	" />
       </div>
 
       <video id="video" className="hidden" playsInline ref={videoRef}></video>
 
       <div className="grid grid-cols-3 grid-rows-3 gap-5 h-[80vh]">
-        <div className="col-span-2 row-span-2 rounded-lg overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            id="output"
-            className="w-full h-auto"
-            width={"100%"}
-          />
+        <div className="col-span-2 row-span-2 rounded-lg relative">
+          <div className="absolute w-full flex justify-center top-0 -translate-y-1/2">
+            <div className="bg-orange-900 p-5 rounded-full text-3xl m-2 shadow-lg">
+              <FaCamera />
+            </div>
+          </div>
+          <div
+            className="h-full w-full
+          overflow-hidden rounded-lg
+          "
+          >
+            <canvas
+              ref={canvasRef}
+              id="output"
+              className="w-full h-auto"
+              width={"100%"}
+            />
+          </div>
         </div>
-  
+
         <table className="table-auto border border-gray-800 rounded-2xl font-normal overflow-hidden p-2 row-span-3 text-xl">
           <thead className="bg-orange-950 rounded-2xl text-white">
             <tr>
@@ -308,7 +317,7 @@ export default function Home() {
                   <AiFillEye /> Blinks (current session)
                 </div>
               </td>
-              <td className='text-orange-800'>{numBlinks}</td>
+              <td className="text-orange-800">{numBlinks}</td>
             </tr>
             <tr className="text-center">
               <td className="text-orange-950">
@@ -316,7 +325,9 @@ export default function Home() {
                   <FaClock /> Time
                 </div>
               </td>
-              <td className='text-orange-800'>{timeSinceLastBlink.toFixed(1)}</td>
+              <td className="text-orange-800">
+                {timeSinceLastBlink.toFixed(1)}
+              </td>
             </tr>
             <tr className="text-center">
               <td className="text-orange-950">
@@ -324,7 +335,7 @@ export default function Home() {
                   <FaMedal /> Best Time Today
                 </div>
               </td>
-              <td className='text-orange-800'>{longestTime}</td>
+              <td className="text-orange-800">{longestTime}</td>
             </tr>
           </tbody>
         </table>
@@ -345,7 +356,6 @@ export default function Home() {
             width={50}
           />
         </div>
-
       </div>
     </main>
   );
