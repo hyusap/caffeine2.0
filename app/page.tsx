@@ -265,14 +265,14 @@ export default function Home() {
     <main
       className={
         "h-screen text-white p-5 flex flex-col " +
-        (shouldBeRed ? "bg-red-500" : "bg-[#264012]")
+        (shouldBeRed ? "bg-red-500" : "bg-[#C4A484]")
       }
       id="holding-thing"
     >
       <div className="flex items-center">
         <h1 className="text-[6vw] font-black grow">
           welcome to{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8FF00] to-[#3AD59F]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9B4431] to-[#4C231A]">
             caffeine 2.0
           </span>
         </h1>
@@ -291,37 +291,37 @@ export default function Home() {
           />
         </div>
   
-        <table className="table-auto border border-gray-800 rounded-2xl font-normal overflow-hidden p-2 row-span-3">
-          <thead className="bg-gray-800 text-gray-500 rounded-2xl">
+        <table className="table-auto border border-gray-800 rounded-2xl font-normal overflow-hidden p-2 row-span-3 text-xl">
+          <thead className="bg-orange-950 rounded-2xl text-white">
             <tr>
               <th className="px-4 py-2 font-bold">Stat</th>
               <th className="px-4 py-2 font-bold">Value</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-700 ">
+          <tbody className="bg-orange-200 ">
             <tr className="text-center">
-              <td className="text-gray-400">
-                <div className="flex justify-center items-center gap-1 h-full w-full">
+              <td className="text-orange-950">
+                <div className="flex justify-center items-center gap-1 h-full w-full font-bold">
                   <AiFillEye /> Blinks (current session)
                 </div>
               </td>
-              <td>{numBlinks}</td>
+              <td className='text-orange-800'>{numBlinks}</td>
             </tr>
             <tr className="text-center">
-              <td className="text-gray-400">
-                <div className="flex justify-center items-center gap-1 h-full w-full">
+              <td className="text-orange-950">
+                <div className="flex justify-center items-center gap-1 h-full w-full font-bold">
                   <FaClock /> Time
                 </div>
               </td>
-              <td>{timeSinceLastBlink.toFixed(1)}</td>
+              <td className='text-orange-800'>{timeSinceLastBlink.toFixed(1)}</td>
             </tr>
             <tr className="text-center">
-              <td className="text-gray-400">
-                <div className="flex justify-center items-center gap-1 h-full w-full">
+              <td className="text-orange-950">
+                <div className="flex justify-center items-center gap-1 h-full w-full font-bold">
                   <FaMedal /> Best Time Today
                 </div>
               </td>
-              <td>{longestTime}</td>
+              <td className='text-orange-800'>{longestTime}</td>
             </tr>
           </tbody>
         </table>
