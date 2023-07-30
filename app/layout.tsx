@@ -20,6 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <title>Caffeine 2.0</title>
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

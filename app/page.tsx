@@ -9,7 +9,6 @@ import { AiFillEye, AiFillCrown } from "react-icons/ai";
 import { FaClock, FaMedal } from "react-icons/fa";
 import { useLocalStorage } from "usehooks-ts";
 import { getRandomInt } from "@/utils/misc";
-import { ChakraProvider } from "@chakra-ui/react";
 import { useToast } from "@chakra-ui/react";
 
 let test = 0;
@@ -277,12 +276,15 @@ export default function Home() {
       }
       id="holding-thing"
     >
-      <h1 className="text-[6vw] font-black grow">
-        welcome to{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8FF00] to-[#3AD59F]">
-          caffeine 2.0
-        </span>
-      </h1>
+      <div className="flex items-center">
+        <h1 className="text-[6vw] font-black grow">
+          welcome to{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8FF00] to-[#3AD59F]">
+            caffeine 2.0
+          </span>
+        </h1>
+        <img src="/caffeine_logo.png" alt="" className='max-h-24 animate-spin	'/>
+      </div>
 
       <video id="video" className="hidden" playsInline ref={videoRef}></video>
 
