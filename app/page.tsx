@@ -66,9 +66,7 @@ export default function Home() {
     // timer for keystroke delay
     setInterval(() => {
       setTimeSinceLastBlink((timeSinceLastBlink) => {
-        console.log(timeSinceLastBlink);
-        console.log(longestTime);
-        setLongestTime((longestTime) => {
+        setLongestTime((longestTime: string) => {
           if (timeSinceLastBlink > Number(longestTime)) {
             return timeSinceLastBlink.toFixed(1);
           } else {
@@ -153,7 +151,7 @@ export default function Home() {
           const avgHeight = (leftEyeHeight + rightEyeHeight) / 2;
 
           if (avgHeight < 6) {
-            const audio = new Audio(`/sounds/${getRandomInt(50)}.m4a`);
+            const audio = new Audio(`/sounds/${getRandomInt(7)}.m4a`);
             audio.play();
 
             setShouldBeRed(true);
@@ -186,15 +184,7 @@ export default function Home() {
 
               // within here, we know that the user blinked
 
-              console.log(
-                "timeSinceLastBlink",
-                timeSinceLastBlink,
-                "longestTime",
-                longestTime
-              );
-
               setTimeSinceLastBlink(0);
-
               setIsRunning(!isRunning);
             }
 
